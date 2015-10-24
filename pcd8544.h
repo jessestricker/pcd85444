@@ -8,7 +8,7 @@
 
 class pcd8544 {
 public:
-    enum class color : uint8_t { white = 0, black = 0 };
+    enum class color : uint8_t { white = 0, black = 1 };
 
     static const uint8_t width = 84, height = 48, pixel_per_byte = 0;
 
