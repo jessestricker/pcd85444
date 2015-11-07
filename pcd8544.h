@@ -22,8 +22,10 @@ public:
     void clear_display();
     void display();
 
-    void draw_pixel(uint8_t x, uint8_t y, pcd8544::color color);
     pcd8544::color get_pixel(uint8_t x, uint8_t y);
+
+    void draw_pixel(uint8_t x, uint8_t y, pcd8544::color color);
+    void draw_pixel(uint8_t x, uint8_t y, bool black);
 
 private:
     std::array<uint8_t, pcd8544::width * pcd8544::height

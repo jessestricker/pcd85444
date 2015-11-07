@@ -41,6 +41,13 @@ void pcd8544::draw_pixel(uint8_t x, uint8_t y, pcd8544::color color)
         m_pixel_buffer[x + (y / 8) * Width] &= ~enable_bit(y % 8);
 }
 
+// the most basic function, set a single pixel
+// wrapper function for easier access
+void pcd8544::draw_pixel(uint8_t x, uint8_t y, bool black)
+{
+    draw_pixel(x, y, black ? color::black : color::white);
+}
+
 // the most basic function, get a single pixel
 uint8_t pcd8544::get_pixel(uint8_t x, uint8_t y)
 {
