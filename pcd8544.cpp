@@ -17,6 +17,7 @@ const uint8_t PCD8544_SETTEMP = 0x04, PCD8544_SETBIAS = 0x10,
               PCD8544_SETVOP = 0x80;
 
 inline uint8_t enable_bit(uint8_t bit) { return 1 << bit; }
+inline bool get_bit(uint8_t byte, uint8_t n) { return (byte >> n) & 0x1; }
 
 pcd8544::pcd8544(uint8_t dc_pin, uint8_t sce_pin, uint8_t rst_pin)
     : m_dc_pin(dc_pin)
@@ -60,9 +61,11 @@ pcd8544::color pcd8544::get_pixel(uint8_t x, uint8_t y)
     if (y >= height)
         throw std::out_of_range("y");
 
-    uint8_t col = (m_pixel_buffer[x + (y / pixel_per_byte) * width]
-                      >> (y % pixel_per_byte)) & 0x1;
-    return col > 0 ? color::black : color::white;
+    auto byteContainingPixelXY
+        = m_pixel_buffer[x + (y / pixel_per_byte) * width];
+    bool isBlack = get_bit(byteContainingPixelXY, y % pixel_per_byte);
+
+    return isBlack ? color::black : color::white;
 }
 
 // initializes the SPI and resets the display
