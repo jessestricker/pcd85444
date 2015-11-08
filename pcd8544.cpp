@@ -29,16 +29,16 @@ pcd8544::pcd8544(uint8_t dc_pin, uint8_t sce_pin, uint8_t rst_pin)
 pcd8544::~pcd8544() { bcm2835_spi_end(); }
 
 // the most basic function, set a single pixel
-void pcd8544::draw_pixel(uint8_t x, uint8_t y, pcd8544::color color)
+void pcd8544::draw_pixel(uint8_t x, uint8_t y, color color)
 {
     if ((x >= width) || (y >= height))
         return;
 
     // x is which column
     if (color != pcd8544::color::white)
-        m_pixel_buffer[x + (y / 8) * Width] |= enable_bit(y % 8);
+        m_pixel_buffer[x + (y / 8) * width] |= enable_bit(y % 8);
     else
-        m_pixel_buffer[x + (y / 8) * Width] &= ~enable_bit(y % 8);
+        m_pixel_buffer[x + (y / 8) * width] &= ~enable_bit(y % 8);
 }
 
 // the most basic function, set a single pixel
@@ -49,12 +49,15 @@ void pcd8544::draw_pixel(uint8_t x, uint8_t y, bool black)
 }
 
 // the most basic function, get a single pixel
-uint8_t pcd8544::get_pixel(uint8_t x, uint8_t y)
+pcd8544::color pcd8544::get_pixel(uint8_t x, uint8_t y)
 {
-    if ((x >= width) || (y >= height))
-        return 0;
+    if (x >= width)
+        throw std::out_of_range("x");
+    if (y >= height)
+        throw std::out_of_range("y");
 
-    return (m_pixel_buffer[x + (y / 8) * width] >> (y % 8)) & 0x1;
+    uint8_t col = (m_pixel_buffer[x + (y / 8) * width] >> (y % 8)) & 0x1;
+    return col > 0 ? color::black : color::white;
 }
 
 // initializes the SPI and resets the display
