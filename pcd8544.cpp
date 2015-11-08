@@ -35,10 +35,14 @@ void pcd8544::draw_pixel(uint8_t x, uint8_t y, color color)
         return;
 
     // x is which column
-    if (color != pcd8544::color::white)
-        m_pixel_buffer[x + (y / 8) * width] |= enable_bit(y % 8);
-    else
-        m_pixel_buffer[x + (y / 8) * width] &= ~enable_bit(y % 8);
+    if (color != pcd8544::color::white) {
+        m_pixel_buffer[x + (y / pixel_per_byte) * width]
+            |= enable_bit(y % pixel_per_byte);
+    }
+    else {
+        m_pixel_buffer[x + (y / pixel_per_byte) * width]
+            &= ~enable_bit(y % pixel_per_byte);
+    }
 }
 
 // the most basic function, set a single pixel
@@ -56,7 +60,8 @@ pcd8544::color pcd8544::get_pixel(uint8_t x, uint8_t y)
     if (y >= height)
         throw std::out_of_range("y");
 
-    uint8_t col = (m_pixel_buffer[x + (y / 8) * width] >> (y % 8)) & 0x1;
+    uint8_t col = (m_pixel_buffer[x + (y / pixel_per_byte) * width]
+                      >> (y % pixel_per_byte)) & 0x1;
     return col > 0 ? color::black : color::white;
 }
 
