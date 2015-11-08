@@ -1,5 +1,5 @@
 MAJOR	= 1
-MINOR	= 1
+MINOR	= 2
 VERSION	= $(MAJOR).$(MINOR)
 NAME	= pcd8544
 LIBFILE	= lib$(NAME).so.$(VERSION)

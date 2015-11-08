@@ -4,18 +4,6 @@
 
 #include <bcm2835.h>
 
-const uint8_t PCD8544_POWERDOWN = 0x04, PCD8544_ENTRYMODE = 0x02,
-              PCD8544_EXTENDEDINSTRUCTION = 0x01;
-
-const uint8_t PCD8544_DISPLAYBLANK = 0x0, PCD8544_DISPLAYNORMAL = 0x4,
-              PCD8544_DISPLAYALLON = 0x1, PCD8544_DISPLAYINVERTED = 0x5;
-
-const uint8_t PCD8544_FUNCTIONSET = 0x20, PCD8544_DISPLAYCONTROL = 0x08,
-              PCD8544_SETYADDR = 0x40, PCD8544_SETXADDR = 0x80;
-
-const uint8_t PCD8544_SETTEMP = 0x04, PCD8544_SETBIAS = 0x10,
-              PCD8544_SETVOP = 0x80;
-
 inline uint8_t enable_bit(uint8_t bit) { return 1 << bit; }
 inline bool get_bit(uint8_t byte, uint8_t n) { return (byte >> n) & 0x1; }
 
@@ -32,8 +20,10 @@ pcd8544::~pcd8544() { bcm2835_spi_end(); }
 // the most basic function, set a single pixel
 void pcd8544::draw_pixel(uint8_t x, uint8_t y, color color)
 {
-    if ((x >= width) || (y >= height))
-        return;
+    if (x >= width)
+        throw std::out_of_range("x");
+    if (y >= height)
+        throw std::out_of_range("y");
 
     // x is which column
     if (color != pcd8544::color::white) {
@@ -83,44 +73,37 @@ void pcd8544::begin(uint8_t contrast, uint8_t bias)
     m_rst_pin.set_state(true);
 
     // get into the EXTENDED mode!
-    command(PCD8544_FUNCTIONSET | PCD8544_EXTENDEDINSTRUCTION);
+    command(command_t::set_function_set_extended);
 
     // LCD bias select (4 is optimal?)
-    command(PCD8544_SETBIAS | bias);
+    command(command_t::set_bias, bias);
 
     set_contrast(contrast);
 
     // Set display to Normal
-    command(PCD8544_DISPLAYCONTROL | PCD8544_DISPLAYNORMAL);
+    command(command_t::set_display_control_normal);
 
     // Push out m_pixel_buffer to the Display (will show the AFI logo)
     display();
 }
 
-void pcd8544::command(uint8_t c)
+void pcd8544::command(command_t c, uint8_t v)
 {
     m_dc_pin.set_state(false);
     m_sce_pin.set_state(false);
-    bcm2835_spi_transfer(c);
-    m_sce_pin.set_state(true);
-}
-
-void pcd8544::data(uint8_t c)
-{
-    m_dc_pin.set_state(true);
-    m_sce_pin.set_state(false);
-    bcm2835_spi_transfer(c);
+    bcm2835_spi_transfer(c | v);
     m_sce_pin.set_state(true);
 }
 
 void pcd8544::set_contrast(uint8_t val)
 {
+    // clamp contrast to its maximum value of 0x7f (
     if (val > 0x7f) {
         val = 0x7f;
     }
-    command(PCD8544_FUNCTIONSET | PCD8544_EXTENDEDINSTRUCTION);
-    command(PCD8544_SETVOP | val);
-    command(PCD8544_FUNCTIONSET);
+    command(command_t::set_function_set_extended);
+    command(command_t::set_vop, val);
+    command(command_t::set_function_set_basic);
 }
 
 void pcd8544::display()
@@ -128,12 +111,12 @@ void pcd8544::display()
     uint8_t col, maxcol, p;
 
     for (p = 0; p < 6; p++) {
-        command(PCD8544_SETYADDR | p);
+        command(command_t::set_y_addr, p);
 
         col = 0;
         maxcol = width - 1;
 
-        command(PCD8544_SETXADDR | col);
+        command(command_t::set_x_addr, col);
 
         m_dc_pin.set_state(true);
         m_sce_pin.set_state(false);
@@ -145,7 +128,7 @@ void pcd8544::display()
 
     // no idea why this is necessary but it is to
     // finish the last byte
-    command(PCD8544_SETYADDR);
+    command(command_t::set_y_addr);
 }
 
 // clear everything
